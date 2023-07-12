@@ -1,0 +1,27 @@
+This directory contains software that was contributed by various users to 
+CUPS-PDF. It enhances functionality or supports the setup of CUPS-PDF on
+different platforms.
+
+As far as not explicitly stated otherwise all of the contributed software 
+is distributed under the same license as CUPS-PDF (GPL) - check ../COPYING
+for more information.
+
+Currently the following contributions are available:
+
+* SELinux-HOWTO by Doc Walker
+    A collection of scripts and documentation on how to set up CUPS-PDF in a
+    SELinux environment (e.g. FC4 or FC5).
+    (C) 2006 by Doc Walker <doc at wvfans.net>
+  Remi Collet provided a new .te file with v2.4.8
+    (C) 2008 by Remi Collet <Fedora@FamilleCollet.com>
+
+* pstitleiconv by Nickolay Kondrashov
+    This filter allows conversion of character encoding in PS files for
+    processing by CUPS-PDF. This will allow international characters in
+    filenames when printing from Windows clients.
+    (C) 2006 by Nickolay Kondrashov <knu@avtomatikarus.com>
+
+* cups-pdf-dispatch by Nickolay Kondrashov
+    An elaborate postprocessing script for CUPS-PDF that allows sending mails 
+    with the created PDFs to users.
+    (C) 2006 by Nickolay Kondrashov <knu@avtomatikarus.com>

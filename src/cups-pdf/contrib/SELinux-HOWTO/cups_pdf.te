@@ -1,0 +1,25 @@
+policy_module(cups_pdf,CUPSVERSION)
+
+require {
+    class dir { add_name create getattr remove_name search setattr write };
+    class file { create getattr read setattr unlink write };
+
+    type cupsd_t;
+    type home_root_t;
+    type user_home_dir_t;
+    type user_home_t;
+    type print_spool_t;
+    type unconfined_home_dir_t;
+    type unconfined_home_t;
+}
+
+allow cupsd_t home_root_t:dir { getattr search };
+
+allow cupsd_t user_home_dir_t:dir { getattr search };
+allow cupsd_t user_home_t:dir { add_name create getattr remove_name search setattr write };
+allow cupsd_t user_home_t:file { create getattr read setattr unlink write };
+
+allow cupsd_t unconfined_home_dir_t:dir { getattr search };
+allow cupsd_t unconfined_home_t:dir { add_name create getattr remove_name search setattr write };
+allow cupsd_t unconfined_home_t:file { create getattr read setattr unlink write };
+

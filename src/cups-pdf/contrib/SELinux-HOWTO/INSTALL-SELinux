@@ -1,0 +1,37 @@
+HOWTO: Enable CUPS-PDF to work with SELinux
+-------------------------------------------
+Security-enhanced Linux (SELinux) is a set of extensions to the standard Linux
+kernel that add mandatory access controls to help prevent failures in system
+security due to malicious or flawed applications. It is enabled by default on
+Fedora Core 4 and 5, as well as other mainstream distributions. See
+<http://www.nsa.gov/selinux/> for more background information.
+
+In order to use CUPS-PDF with SELinux enabled, you will need to compile and
+install the following security policy module:
+
+$ cd cups-pdf-2.6.1/contrib/SELinux-HOWTO
+$ ./update-module
+
+Compiling type enforcement file 'cups_pdf.te' --> 'cups_pdf.mod'.
+checkmodule:  loading policy configuration from cups_pdf.te
+checkmodule:  policy configuration loaded
+checkmodule:  writing binary representation (version 5) to cups_pdf.mod
+Creating policy package 'cups_pdf.mod' --> 'cups_pdf.pp'.
+Installing security policy 'cups_pdf.pp' into current machine policy.
+cups_pdf        2.6.1
+
+$ sudo service cups restart
+Stopping cups:                                             [  OK  ]
+Starting cups:                                             [  OK  ]
+
+You should now be able to print via CUPS-PDF.
+
+View the SELinux audit log to verify the newly-installed mandatory access
+controls allow CUPS-PDF to print properly:
+
+$ sudo tail -F -n 1000 /var/log/audit/audit.log | grep AVC
+
+You should see various messages indicating security granted to the cupsd daemon.
+
+Refer to <http://fedora.redhat.com/docs/selinux-faq-fc5/#faq-entry-local.te> for
+more information.

@@ -1,0 +1,42 @@
+	PSTITLEICONV v0.1 README
+
+PSTITLEICONV is the CUPS filter for converting PostScript document embedded
+title character encoding.
+
+
+	INSTALLING
+
+Copy pstitleiconv to the CUPS filter directory (usually /usr/lib/cups/filter).
+Copy pstitleiconv.conf to /etc/cups directory (or modify pstitleiconv to use
+your location)
+
+
+	USAGE
+
+PSTITLEICONV intended usage is in the filter chain before cups-pdf backend
+to make international characters in the resulting filenames to appear
+correctly.
+
+Just add following line to the cups-pdf ppd file, somewhere near the top,
+say, just after *Name definitions:
+
+*cupsFilter:    "application/vnd.cups-postscript 0 pstitleiconv"
+
+Then, specify source (client system) and target (host) character encodings
+in the /etc/pstitleiconv.conf file (look there for details).
+
+
+	COMMENTS
+
+Parts of the code were inspired by or taken from cups-pdf CUPS backend.
+
+Unfortunately, the author was not able to find a better way to pass
+source and target encoding to the filter instance. So, for the time being,
+configuration file /etc/cups/pstitleiconv.conf remains the only source, sorry.
+If you could think of a better way, please inform me.
+
+
+	AUTHOR
+
+Nickolay Kondrashov
+<knu@avtomatikarus.com>

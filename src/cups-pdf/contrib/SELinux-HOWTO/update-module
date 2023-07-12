@@ -1,0 +1,97 @@
+#!/bin/sh
+###
+#
+# Update SELinux policy module for CUPS-PDF
+#
+# Shell script created by Rx on 7 May 06
+#  removed some bashisms, Feb. 18th, 2011, VB
+#
+###
+
+SELINUXENABLED=`which selinuxenabled`
+GETENFORCE=`which getenforce`
+GETSEBOOL=`which getsebool`
+CHECKMODULE=`which checkmodule`
+SEMODULE_PACKAGE=`which semodule_package`
+SEMODULE=`which semodule`
+
+echo ""
+
+if [ "x$SELINUXENABLED" = "x" ]; then
+    echo "Cannot locate executable 'selinuxenabled' (via 'which' command)."
+    echo "Script '$0' terminated (exit code 1)."
+    exit 1
+fi
+
+if [ x"$GETENFORCE" = "x" ]; then
+    echo "Cannot locate executable 'getenforce' (via 'which' command)."
+    echo "Script '$0' terminated (exit code 2)."
+    exit 2
+fi
+
+if [ x"$GETSEBOOL" = "x" ]; then
+    echo "Cannot locate executable 'getsebool' (via 'which' command)."
+    echo "Script '$0' terminated (exit code 3)."
+    exit 3
+fi
+
+if [ x"$CHECKMODULE" = "x" ]; then
+    echo "Cannot locate executable 'checkmodule' (via 'which' command)."
+    echo "The following command will correct this (re-run this script afterward):"
+    echo "$ sudo yum install checkpolicy"
+    echo "Script '$0' terminated (exit code 4)."
+    exit 4
+fi
+
+if [ x"$SEMODULE_PACKAGE" = "x" ]; then
+    echo "Cannot locate executable 'semodule_package' (via 'which' command)."
+    echo "Script '$0' terminated (exit code 5)."
+    exit 5
+fi
+
+if [ x"$SEMODULE" = "x" ]; then
+    echo "Cannot locate executable 'semodule' (via 'which' command)."
+    echo "Script '$0' terminated (exit code 6)."
+    exit 6
+fi
+
+if [ `$SELINUXENABLED` ]; then
+    echo "SELinux is not enabled; this script is unnecessary."
+    echo "Script '$0' terminated (exit code 11)."
+    exit 11
+fi
+
+if [ `$GETENFORCE` != "Enforcing" ]; then
+    echo "SELinux is not in 'Enforcing' mode; this script is unnecessary."
+    echo "The following command will correct this (re-run this script afterward):"
+    echo "$ sudo setenforce 1"
+    echo "Script '$0' terminated (exit code 12)."
+    exit 12
+fi
+
+if [ "`$GETSEBOOL cupsd_disable_trans`" = "cupsd_disable_trans --> on" ]; then
+    echo "Security policy ignored for cupsd transactions; this script is unnecessary."
+    echo "The following command will correct this (re-run this script afterward):"
+    echo "$ sudo setsebool -P cupsd_disable_trans 0"
+    echo "Script '$0' terminated (exit code 13)."
+    exit 13
+fi
+
+MODULE="cups_pdf"
+
+if [ -f $MODULE.te ]; then
+    echo "Compiling type enforcement file '$MODULE.te' --> '$MODULE.mod'."
+    checkmodule -M -m -o $MODULE.mod $MODULE.te
+fi
+
+if [ -f $MODULE.mod ]; then
+    echo "Creating policy package '$MODULE.mod' --> '$MODULE.pp'."
+    semodule_package -o $MODULE.pp -m $MODULE.mod
+fi
+
+if [ -f $MODULE.pp ]; then
+    echo "Installing security policy '$MODULE.pp' into current machine policy."
+    sudo semodule -i $MODULE.pp
+fi
+
+echo "`sudo semodule -l | grep $MODULE`"

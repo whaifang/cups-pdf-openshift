@@ -1,0 +1,244 @@
+#!/usr/bin/perl -w
+
+#     Copyright 2006 Nickolay Kondrashov
+# 
+#    This program is free software; you can redistribute it and/or modify
+#    it under the terms of the GNU General Public License as published by
+#    the Free Software Foundation; either version 2 of the License, or
+#    (at your option) any later version.
+#
+#    This program is distributed in the hope that it will be useful,
+#    but WITHOUT ANY WARRANTY; without even the implied warranty of
+#    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#    GNU General Public License for more details.
+#
+#    You should have received a copy of the GNU General Public License
+#    along with this program; if not, write to the Free Software
+#    Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
+
+use strict;
+use Sys::Hostname;
+use File::Basename;
+use Mail::Header;
+use MIME::Lite;
+use MIME::Words;
+
+my $CONFIG_PATH = "/etc/cups/cups-pdf-dispatch.conf";
+
+### CONFIGURATION ##############################
+
+# set default configuration parameters
+my $CHARSET = "utf-8";
+my $FROM_MAILADDR = "root";
+my $FROM_REALNAME = "PDF Printer";
+my $SUBJECT_FORMAT = "Printout: \%s";
+my $MAX_ATTACHMENT_SIZE = 5 * 1024 * 1024;	# 5Mb
+my $BODY_MIME_TYPE = 'text/plain';
+
+my $FILE_ATTACHED_MSG_FORMAT =
+	"Your PDF file %s is attached.\n";
+my $FILE_TOO_BIG_MSG_FORMAT =
+	"Your PDF file size is \%s, which is greater than\n".
+	"\%s attachment size limit set by administrator.\n\n".
+	"The file has been left on the server to save e-mail traffic.\n";
+my $FILE_STORED_MSG_FORMAT = 
+	"It is stored until midnight at the following location:\n\%s\n";
+my $FILE_REMOVED_MSG =
+	"It has been removed from the server after sending.\n";
+
+my @FILE_SIZE_DIMENSIONS = qw(bytes Kb Mb Gb);
+my $TRY_STRIP_JOB_IDS = 1;
+my @APP_PREFIXES = qw(
+			Microsoft_Word_-_
+			Microsoft_Excel_-_
+			Microsoft_PowerPoint_-_
+			Microsoft_Access_-_
+			Microsoft_Outlook_-_
+);
+my $TRY_STRIP_APP_PREFIXES = 1;
+my $REMOVE_SENT = 1;
+my $LINK_FORMAT = "\\\\". uc( hostname() ). "\\printouts\$\\\%s\\\%s";
+my $GET_USER_MAILADDR_SUB = sub{ $_[0]. '@'. hostname() };
+my $GET_USER_REALNAME_SUB = sub{ (split( /,/, (getpwnam($_[0]))[6], 2 ))[0] };
+
+# read config file contents
+my $CONFIG_CONTENTS;
+{
+	local $/;
+	open( CONFIG, $CONFIG_PATH ) or
+		die "Failed to open config file $CONFIG_PATH: $!\n";
+	$CONFIG_CONTENTS = <CONFIG>;
+	close( CONFIG ) or
+		die "Failed to close config file $CONFIG_PATH: $!\n";
+}
+
+# eval config file contents
+eval $CONFIG_CONTENTS;
+if( $@ ) {
+	die "Failed to evaluate config file contents: $@\n"
+}
+
+# check parameters
+unless( defined( $FROM_MAILADDR ) && length( $FROM_MAILADDR ) ) {
+	die "From mail address is not set.";
+}
+
+### SUBS #######################################
+
+# formats human-readable file size string
+sub format_file_size
+{
+	my( $size ) = @_;
+	my $dim = 0;
+	while(
+		$dim <= scalar( @FILE_SIZE_DIMENSIONS ) &&
+		$size > 1024<<($dim*10)
+	) { $dim++ }
+	return ( $size>>($dim*10) ). " ".
+		$FILE_SIZE_DIMENSIONS[$dim];
+}
+
+sub strip_job_ids
+{
+	my( $file_basename ) = @_;
+	$file_basename =~ s/^job_[0-9]+-([^\.])/$1/;
+	$file_basename =~ s/^smbprn_[0-9]{8}_([^\.])/$1/;
+	return $file_basename;
+}
+
+sub strip_prefixes
+{
+	my( $file_basename, @prefixes ) = @_;
+	foreach (@prefixes) {
+		$file_basename =~ s/^\Q$_\E([^\.])/$1/;
+	}
+	return $file_basename;
+}
+
+# Taken this function from another project of mine.
+# Can't remember exactly what it's purpose is, but
+# it seems to correct some bug in underlying MIME::Words
+# implementation.
+sub hacked_encode_mimewords
+{
+	my ( $words ) = @_;
+	my $encoded_words = MIME::Words::encode_mimeword( $words, 'Q', $CHARSET );
+	$encoded_words =~ s/ /_/g;
+	return $encoded_words;
+}
+
+### MAIN #######################################
+
+my( $filename, $username ) = @ARGV;
+
+my $file_basename = basename( $filename );
+my $file_prettyname = $file_basename;
+
+if( $TRY_STRIP_JOB_IDS ) {
+	$file_prettyname = strip_job_ids( $file_prettyname );
+}
+
+if( $TRY_STRIP_APP_PREFIXES ) {
+	$file_prettyname = strip_prefixes( $file_prettyname, @APP_PREFIXES );
+}
+
+my $file_size;
+{
+	my @file_stat = stat( $filename );
+	unless( scalar( @file_stat ) ) {
+		die "Failed to stat PDF file $filename: $!\n"
+	}
+	$file_size = $file_stat[7];
+}
+my $file_link = sprintf( $LINK_FORMAT, $username, $file_basename );
+
+my $user_mailaddr = $GET_USER_MAILADDR_SUB->( $username );
+unless( defined( $user_mailaddr ) ) {
+	warn "User $username has no e-mail address.\n";
+	exit 0
+}
+my $user_realname = $GET_USER_REALNAME_SUB->( $username );
+
+my $from_header = defined $FROM_REALNAME ?
+	hacked_encode_mimewords( $FROM_REALNAME ). '<'. $FROM_MAILADDR. '>' :
+	$FROM_MAILADDR;
+my $to_header = defined $user_realname ?
+	hacked_encode_mimewords( $user_realname ). '<'. $user_mailaddr. '>' :
+	$user_mailaddr;
+my $subject_header = hacked_encode_mimewords(
+	sprintf( $SUBJECT_FORMAT, $file_prettyname )
+);
+
+# prevent encoded headers from (incorrect) folding
+Mail::Header->fold_length( 'From', 1023 );
+Mail::Header->fold_length( 'To', 1023 );
+Mail::Header->fold_length( 'Subject', 1023 );
+Mail::Header->fold_length( 'Content-Type', 1023 );
+Mail::Header->fold_length( 'Content-Disposition', 1023 );
+
+my $msg;
+my $remove_after_sending = 0;
+
+if(
+	!defined $MAX_ATTACHMENT_SIZE ||
+	$file_size < $MAX_ATTACHMENT_SIZE
+) {
+	my $body_text = sprintf(
+			$FILE_ATTACHED_MSG_FORMAT,
+			$file_prettyname
+	). "\n". ( $REMOVE_SENT ?
+		$FILE_REMOVED_MSG :
+		sprintf(
+			$FILE_STORED_MSG_FORMAT,
+			$file_link
+		)
+	);
+
+	$msg = new MIME::Lite(
+		From	=> $from_header,
+		To	=> $to_header,
+		Subject	=> $subject_header,
+		Type	=> 'multipart/mixed'
+	);
+	$msg->attach(
+		Encoding=> 'quoted-printable',
+		Type	=> "$BODY_MIME_TYPE; charset=$CHARSET",
+		Data	=> $body_text
+	);
+	$msg->attach(
+		Encoding	=> 'base64',
+		Type		=> 'application/pdf',
+		Disposition	=> 'attachment',
+		Path		=> $filename,
+		Filename	=> hacked_encode_mimewords( $file_prettyname )
+	);
+
+	$remove_after_sending = $REMOVE_SENT;
+} else {
+	my $body_text = sprintf(
+		$FILE_TOO_BIG_MSG_FORMAT,
+		format_file_size( $file_size ),
+		format_file_size( $MAX_ATTACHMENT_SIZE )
+	). "\n". sprintf(
+		$FILE_STORED_MSG_FORMAT,
+		$file_link
+	);
+	$msg = new MIME::Lite(
+		From	=> $from_header,
+		To	=> $to_header,
+		Subject	=> $subject_header,
+		Encoding=> 'quoted-printable',
+		Type	=> "$BODY_MIME_TYPE; charset=$CHARSET",
+		Data	=> $body_text
+	);
+}
+
+$msg->send();
+
+if( $remove_after_sending ) {
+	unlink $filename or
+		die "Failed to remove PDF file $filename: $!\n";
+}
+
+exit 0
+

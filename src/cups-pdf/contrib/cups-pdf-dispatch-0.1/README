@@ -1,0 +1,42 @@
+	CUPS-PDF-DISPATCH v0.1 README
+
+CUPS-PDF-DISPATCH is a postprocessing script for cups-pdf.
+
+
+	INSTALLING
+
+Copy cups-pdf-dispatch to your favorite binaries directory (/usr/local/bin is a
+good choice).
+Copy cups-pdf-dispatch.conf template to /etc/cups directory (or modify
+cups-pdf-dispatch to use your location).
+
+Modify copied cups-pdf-dispatch.conf to suit your needs (look there for
+details).
+Set PostProcessing option in cups-pdf.conf (usually located at
+/etc/cups/cups-pdf.conf) to location of the cups-pdf-dispatch script (f.e.
+/usr/local/bin/cups-pdf-dispatch).
+
+
+	I18N
+
+The main I18N obstacle, when making PDF's from postscript output, is the
+document titles - they are usually specified in client's machine charset.
+Cups-pdf uses postscript title to construct PDF filename when job filename is
+not available (or if you specify to use them preferably).  PSTITLEICONV was
+made to take care of converting title encoding. You could get it from the
+contrib directory of cups-pdf package.
+
+
+	COMMENTS
+
+It's a bit "overengineered", but it works. For instance, messages may need to
+be localized, instead of providing the ability to change them in the conffile.
+Additionaly, there must be a more elegant way to allow fetching of user
+info/e-mail from arbitrary sources (may be just use some generic source?). If
+you have any hints/bugfixes/improvements, please, don't hesitate to contact me.
+
+
+	AUTHOR
+
+Nickolay Kondrashov
+<knu@avtomatikarus.com>
