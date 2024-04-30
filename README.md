@@ -27,7 +27,7 @@ spec:
   strategy:
     type: Docker
     dockerStrategy:
-      dockerfilePath: 'docker/Dockerfile'
+      dockerfilePath: 'Dockerfile'
   runPolicy: Serial
 ```
 
