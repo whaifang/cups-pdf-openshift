@@ -47,9 +47,9 @@ RUN dnf install -y cups  && dnf clean all && \
 # Copy cups-pdf files
 COPY --from=0 /home/cups/src/cups-pdf /usr/lib/cups/backend/cups-pdf
 COPY --from=0 /home/cups/extra/CUPS-PDF_noopt.ppd /etc/cups/ppd/
-COPY docker/src/cups-pdf.conf /etc/cups/
-COPY docker/src/cups-files.conf /etc/cups/
-COPY docker/src/cupsd.conf /etc/cups/
+COPY src/cups-pdf.conf /etc/cups/
+COPY src/cups-files.conf /etc/cups/
+COPY src/cupsd.conf /etc/cups/
 
 # we do not need to ship cups-brf backend and it works only under root user anyway
 RUN rm -f /usr/lib/cups/backend/cups-brf
@@ -65,7 +65,7 @@ ENV CUPS_LIB=/usr/lib/cups
 ENV CUPS_PDF_OUT=/mnt
 
 # Copy the entrypoint script
-COPY docker/src/entrypoint.sh /opt/cups/entrypoint.sh
+COPY src/entrypoint.sh /opt/cups/entrypoint.sh
 
 # Setup cache before first run
 RUN mkdir -p ${CUPS_CACHE} && \
