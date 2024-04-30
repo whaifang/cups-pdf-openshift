@@ -7,7 +7,7 @@ RUN dnf -y install gcc cups cups-libs cups-devel ghostscript glibc
 RUN useradd cups
 
 # Copy source
-COPY docker/src/cups-pdf /home/cups/
+COPY src/cups-pdf /home/cups/
 
 WORKDIR /home/cups/src
 
