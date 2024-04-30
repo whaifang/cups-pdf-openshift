@@ -41,7 +41,7 @@ LABEL io.k8s.display-name="cups $VERSION"
 LABEL io.openshift.expose-services="6631:cups"
 LABEL io.openshift.tags="cups"
 
-RUN dnf install -y cups  && dnf clean all && \
+RUN dnf install -y cups && dnf install tree && dnf clean all && \
 	mkdir -p /opt/cups
 
 # Copy cups-pdf files
