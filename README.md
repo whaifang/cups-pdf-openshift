@@ -16,7 +16,7 @@ spec:
   source:
     git:
 	  # Replace with your own git repo, if you cannot reach github
-      uri: 'https://github.com/lucullusTheOnly/cups-pdf-openshift.git'
+      uri: 'https://github.com/oooNil/cups-pdf-openshift.git'
 	# If you need credentials to pull your git repo, provide a source secret with the credentials
     #sourceSecret:
     #  name: my-git-credentials-secret
