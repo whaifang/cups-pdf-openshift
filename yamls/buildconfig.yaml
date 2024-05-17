@@ -1,0 +1,19 @@
+kind: BuildConfig
+apiVersion: build.openshift.io/v1
+metadata:
+  name: cups-pdf
+spec:
+  source:
+    git:
+      uri: 'https://github.com/oooNil/cups-pdf-openshift.git'
+    #sourceSecret:
+    #  name: my-git-credentials-secret
+  output:
+    to:
+      kind: ImageStreamTag
+      name: 'cups-pdf:latest'
+  strategy:
+    type: Docker
+    dockerStrategy:
+      dockerfilePath: 'Dockerfile'
+  runPolicy: Serial

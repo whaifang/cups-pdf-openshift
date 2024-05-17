@@ -1,0 +1,65 @@
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: cups-pdf
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cups-pdf
+  template:
+    metadata:
+      labels:
+        app: cups-pdf
+    spec:
+      containers:
+        - name: cups-pdf
+          image: image-registry.openshift-image-registry.svc:5000/default/cups-pdf:latest
+          ports:
+            - containerPort: 6631
+              protocol: TCP
+          env:
+            - name: CUPS_PDF_INSTANCE1
+              value: platx2_ZL204
+            - name: CUPS_PDF_INSTANCE2
+              value: platx3_ZL206
+            - name: CUPS_PDF_INSTANCE3
+              value: platx4_ZL208
+            - name: CUPS_PDF_INSTANCE4
+              value: platx5_ZL210
+            - name: CUPS_PDF_INSTANCE5
+              value: platx6_ZL212
+            - name: CUPS_PDF_INSTANCE6
+              value: platx7_ZL214
+            - name: CUPS_PDF_INSTANCE7
+              value: platx8_ZL216
+            - name: CUPS_PDF_INSTANCE8
+              value: platx9_ZL218
+            - name: CUPS_PDF_INSTANCE9
+              value: pcarc1_ZSB50
+            - name: CUPS_PDF_INSTANCE10
+              value: pcarc2_ZSB51
+            - name: CUPS_PDF_INSTANCE11
+              value: prob1_ZRB01
+            - name: CUPS_PDF_INSTANCE12
+              value: prob2_ZRB02
+            - name: CUPS_PDF_INSTANCE13
+              value: prob3_ZRB03
+            - name: CUPS_PDF_INSTANCE14
+              value: prob4_ZRB04
+            - name: CUPS_PDF_INSTANCE15
+              value: prob5_ZRB05
+            - name: CUPS_PDF_INSTANCE16
+              value: prob6_ZRB06
+            - name: CUPS_PDF_INSTANCE17
+              value: platx1_ZL202
+            - name: CUPS_PDF_INSTANCE18
+              value: pcarc3_ZSB52b
+            - name: CUPS_PDF_INSTANCE19
+              value: pcarc4_ZSB52
+            - name: CUPS_PDF_INSTANCE20
+              value: poffice1_ZOFFICE01
+            - name: CUPS_PDF_INSTANCE21
+              value: poffice2_ZOFFICE02
+          imagePullPolicy: Always
+      restartPolicy: Always

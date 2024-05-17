@@ -1,0 +1,13 @@
+kind: ImageStream
+apiVersion: image.openshift.io/v1
+metadata:
+  name: smps-ea
+  namespace: pipelines
+  labels:
+    application: smps-ea
+    template: eap74-basic-s2i
+    template.openshift.io/template-instance-owner: 38eb2434-c9a8-48c2-9a89-27ffb3e0c363
+    xpaas: 7.4.0
+spec:
+  lookupPolicy:
+    local: false

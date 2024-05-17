@@ -28,16 +28,18 @@ done
 # Create config files for all requested CUPS PDF instances from environment variables
 for cupspdf_instance in $(env | grep -e "CUPS_PDF_INSTANCE[0-9]\+=" ) ;
 do
-    NAME="${cupspdf_instance#*=}"
-    KEY="${cupspdf_instance%%=*}"
+    #NAME="${cupspdf_instance#*=}"
+    #KEY="${cupspdf_instance%%=*}"
+    NAME="${cupspdf_instance%%_*}"
+    KEY="${cupspdf_instance#*_}"
     echo "Configuring $KEY ($NAME)"
     # Copy config file
     cp /etc/cups/cups-pdf.conf "/etc/cups/cups-pdf-${NAME}.conf"
     # Check output directory (standard or overwrite)
     OUTPUT_DIR_VAR="${KEY}_OUTPUTDIR"
     if [ "${!OUTPUT_DIR_VAR}" == "" ] ; then
-        echo "    Output directory: $CUPS_PDF_OUT/printout/${NAME}"
-        INSTANCE_OUTPUT_DIR="$CUPS_PDF_OUT/printout/${NAME}"
+        echo "    Output directory: $CUPS_PDF_OUT/printout/${KEY}"
+        INSTANCE_OUTPUT_DIR="$CUPS_PDF_OUT/printout/${KEY}"
     else
         if [[ ${!OUTPUT_DIR_VAR} =~ ^${CUPS_PDF_OUT}/.* ]] ; then
             echo "    Output directory: ${!OUTPUT_DIR_VAR}"
@@ -73,7 +75,8 @@ sleep 1
 
 for cupspdf_instance in $(env | grep -e "CUPS_PDF_INSTANCE[0-9]\+=" ) ;
 do
-    NAME="${cupspdf_instance#*=}"
+    #NAME="${cupspdf_instance#*=}"
+    NAME="${cupspdf_instance%%_*}"
     echo "Adding CUPS PDF printer \"$NAME\""
     lpadmin -p "${NAME}" -E -v "cups-pdf:/${NAME}" -P /etc/cups/ppd/CUPS-PDF_noopt.ppd
 done
@@ -84,7 +87,8 @@ tail -n 1000 -f /var/log/cups/error_log &
 tail -n 1000 -f /var/log/cups/page_log &
 for cupspdf_instance in $(env | grep -e "CUPS_PDF_INSTANCE[0-9]\+=" ) ;
 do
-    NAME="${cupspdf_instance#*=}"
+    #NAME="${cupspdf_instance#*=}"
+    NAME="${cupspdf_instance%%_*}"
     tail -n 1000 -f "/var/log/cups/cups-pdf-${NAME}_log" &
 done
 
