@@ -15,8 +15,6 @@ WORKDIR /home/cups/src
 # Creates /home/cups/src/cups-pdf executable
 RUN gcc -O9 -s cups-pdf.c -o cups-pdf -lcups
 
-
-
 ### Run Stage
 FROM registry.redhat.io/ubi8/ubi:8.6
 #FROM redhat/ubi8:8.6
